@@ -30,6 +30,11 @@ services:
       - redis
     ports:
       - "8080"
+    
+    environment:
+      - DOCKER=true
+    env_file:
+      - ./collector/.env
 
     deploy:
       mode: replicated
@@ -37,7 +42,6 @@ services:
 
   aggregator:
     build: ./aggregator
-    restart: always
     environment:
       - DOCKER=true
     env_file:
