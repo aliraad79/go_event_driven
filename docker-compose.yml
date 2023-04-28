@@ -26,7 +26,6 @@ services:
 
   collector:
     build: ./collector
-    restart: always
     depends_on:
       - redis
     ports:
@@ -39,6 +38,8 @@ services:
   aggregator:
     build: ./aggregator
     restart: always
+    environment:
+      - DOCKER=true
     env_file:
       - ./aggregator/.env
     depends_on:
