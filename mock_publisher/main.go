@@ -6,7 +6,8 @@ import (
 )
 
 func main() {
-	posturl := "http://127.0.0.1:8080/task"
+	// posturl := "http://127.0.0.1:8080/task"
+	posturl := "http://0.0.0.0:8080/task" // for docker
 
 	body := []byte(`{
 		"Title": "Task title",
