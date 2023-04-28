@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/joho/godotenv"
@@ -26,7 +27,6 @@ func initRedisClient() redis.Conn {
 
 		return conn
 	} else {
-		println("HERE")
 		conn, err := redis.Dial("tcp", os.Getenv("REDIS_DOCKER_URL"))
 		if err != nil {
 			panic("Redis panic!")
@@ -69,6 +69,16 @@ func popTasksFromRedis(conn redis.Conn) []interface{} {
 	return s
 }
 
+func heavyTask(conn redis.Conn) {
+	popedRedisTasks := popTasksFromRedis(conn)
+
+	tasks := convertInterfacesToTasks(popedRedisTasks)
+
+	if len(tasks) != 0 {
+		insertTasksToDB(tasks)
+	}
+}
+
 func main() {
 	// Load .env
 	godotenv.Load()
@@ -77,11 +87,19 @@ func main() {
 
 	defer conn.Close()
 
-	popedRedisTasks := popTasksFromRedis(conn)
+	ticker := time.NewTicker(10 * time.Second)
+	tickerChan := make(chan bool)
+	func() {
+		for {
+			select {
+			case <-tickerChan:
+				ticker.Stop()
+				return
+			case tm := <-ticker.C:
+				fmt.Println("The Current time is: ", tm, "Doing Aggregation")
+				heavyTask(conn)
+			}
+		}
+	}()
 
-	tasks := convertInterfacesToTasks(popedRedisTasks)
-
-	if len(tasks) != 0 {
-		insertTasksToDB(tasks)
-	}
 }
