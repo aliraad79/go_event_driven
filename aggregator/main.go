@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/gomodule/redigo/redis"
+	"github.com/joho/godotenv"
 )
 
 const REDIS_KEY = "go_tasks"
@@ -16,12 +18,22 @@ type Task struct {
 }
 
 func initRedisClient() redis.Conn {
-	conn, err := redis.Dial("tcp", ":6379")
-	if err != nil {
-		panic("Redis panic!")
-	}
+	if os.Getenv("DOCKER") == "false" {
+		conn, err := redis.Dial("tcp", ":6379")
+		if err != nil {
+			panic("Redis panic!")
+		}
 
-	return conn
+		return conn
+	} else {
+		println("HERE")
+		conn, err := redis.Dial("tcp", os.Getenv("REDIS_DOCKER_URL"))
+		if err != nil {
+			panic("Redis panic!")
+		}
+
+		return conn
+	}
 }
 
 func convertInterfacesToTasks(redisTasks []interface{}) []Task {
@@ -58,6 +70,9 @@ func popTasksFromRedis(conn redis.Conn) []interface{} {
 }
 
 func main() {
+	// Load .env
+	godotenv.Load()
+
 	conn := initRedisClient()
 
 	defer conn.Close()
@@ -66,5 +81,7 @@ func main() {
 
 	tasks := convertInterfacesToTasks(popedRedisTasks)
 
-	insertTasksToDB(tasks)
+	if len(tasks) != 0 {
+		insertTasksToDB(tasks)
+	}
 }

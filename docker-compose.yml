@@ -1,0 +1,50 @@
+version: "3.1"
+services:
+  # Helper Services ----------------------------
+  redis:
+    image: redis:6.2-bullseye
+    volumes:
+      - redis_cache:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+
+  db:
+    image: postgres:15.2
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: go_tasks
+
+  # --------------------------------------------
+  # nginx:
+  #   image: nginx:latest
+  #   volumes:
+  #     - ./nginx/confd.:/etc/nginx/conf.d
+  #   ports:
+  #     - "5000:5000"
+
+
+  collector:
+    build: ./collector
+    restart: always
+    depends_on:
+      - redis
+    ports:
+      - "8080"
+
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  aggregator:
+    build: ./aggregator
+    restart: always
+    env_file:
+      - ./aggregator/.env
+    depends_on:
+      - redis
+      - db
+
+volumes:
+  redis_cache:
+    driver: local

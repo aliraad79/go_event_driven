@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/gomodule/redigo v1.8.9
+	github.com/joho/godotenv v1.5.1
 	gorm.io/driver/postgres v1.5.0
 	gorm.io/gorm v1.25.0
 )
