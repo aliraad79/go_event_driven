@@ -37,6 +37,14 @@ func initRedisClient() redis.Conn {
 	}
 }
 
+func convertTaskToJson(task Task) []byte {
+	res, err := json.Marshal(task)
+	if err != nil {
+		fmt.Printf("unmarshalling json Failed!, err= %s\n", err)
+	}
+	return res
+}
+
 func main() {
 	// Load .env
 	godotenv.Load()
@@ -53,7 +61,9 @@ func main() {
 			return
 		}
 
-		_, err := redis.Int64(conn.Do("LPush", "go_tasks", TaskBody))
+		taskJSON := convertTaskToJson(TaskBody)
+
+		_, err := redis.Int64(conn.Do("LPush", "go_tasks", taskJSON))
 		if err != nil {
 			fmt.Println("Redis Error!")
 			panic(err)
